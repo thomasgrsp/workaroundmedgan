@@ -437,6 +437,7 @@ x_gen_long = reg_long.predict(comp_gen)
 x_gen_lat = reg_lat.predict(comp_gen)
 ```
 
+## Comparison
 
 ```python
 plt.scatter(x_gen_long, x_gen_lat )
