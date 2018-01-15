@@ -21,7 +21,7 @@ if __name__ == '__main__':
     # To generate synthetic data using a trained model:
     # Comment the train function above and un-comment generateData function below.
     # You must specify "--model_file" and "<out_file>" to generate synthetic data.
-    mg.generateData(nSamples=494,
+    mg.generateData(nSamples=100,
                 modelFile=args.model_file,
                 batchSize=args.batch_size,
                 outFile=args.out_file)
