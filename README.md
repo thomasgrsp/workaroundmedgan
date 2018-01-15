@@ -1,4 +1,4 @@
-
+Credits for medGAN @mp2893
 
 ```python
 import numpy as np
