@@ -1,0 +1,2 @@
+model_checkpoint_path: "results.csv-16"
+all_model_checkpoint_paths: "results.csv-16"
