@@ -56,27 +56,30 @@ class Medgan(object):
 
         with tf.variable_scope('autoencoder', regularizer=l2_regularizer(self.l2scale)):
 
+            # Compress
             for i, compDim in enumerate(self.compressDims):
                 W = tf.get_variable('aee_W_'+str(i), shape=[tempDim, compDim])
                 b = tf.get_variable('aee_b_'+str(i), shape=[compDim])
                 tempVec = self.aeActivation(tf.add(tf.matmul(tempVec, W), b))
                 tempDim = compDim
 
+            # Decompress
             for i, decompDim in enumerate(self.decompressDims):
                 W = tf.get_variable('aed_W_'+str(i), shape=[tempDim, decompDim])
                 b = tf.get_variable('aed_b_'+str(i), shape=[decompDim])
-                tempDim = decompDim
-                if decompDim != self.decompressDims[-1]:
-                    tempVec = self.aeActivation(tf.add(tf.matmul(tempVec, W), b))
                 decodeVariables['aed_W_'+str(i)] = W
                 decodeVariables['aed_b_'+str(i)] = b
-
-            if self.dataType == 'binary':
-                x_reconst = tf.nn.sigmoid(tf.add(tf.matmul(tempVec,W),b))
-                loss = tf.reduce_mean(-tf.reduce_sum(x_input * tf.log(x_reconst + 1e-12) + (1. - x_input) * tf.log(1. - x_reconst + 1e-12), 1), 0)
-            else:
-                x_reconst = tf.nn.relu(tf.add(tf.matmul(tempVec,W),b))
-                loss = tf.reduce_mean((x_input - x_reconst)**2)
+                if i != len(self.decompressDims)-1:
+                    tempVec = self.aeActivation(tf.add(tf.matmul(tempVec, W), b))
+                    tempDim = decompDim
+                # On the last decompressing step: map output to input data type.
+                else:
+                    if self.dataType == 'binary':
+                        x_reconst = tf.nn.sigmoid(tf.add(tf.matmul(tempVec,W),b))
+                        loss = tf.reduce_mean(-tf.reduce_sum(x_input * tf.log(x_reconst + 1e-12) + (1. - x_input) * tf.log(1. - x_reconst + 1e-12), 1), 0)
+                    else:
+                        x_reconst = tf.nn.relu(tf.add(tf.matmul(tempVec,W),b))
+                        loss = tf.reduce_mean((x_input - x_reconst)**2)
             
         return loss, decodeVariables
 
@@ -90,9 +93,10 @@ class Medgan(object):
                 W = tf.get_variable('W_'+str(i), shape=[tempDim, genDim])
                 h = tf.matmul(tempVec,W)
                 h2 = batch_norm(h, decay=self.bnDecay, scale=True, is_training=bn_train, updates_collections=None)
-                if genDim != self.generatorDims[-1]:
+                if i != len(self.generatorDims)-1:
                     h3 = self.generatorActivation(h2)
-                elif genDim == self.generatorDims[-1]:
+                # On the last generator dimension.
+                else:
                     if self.dataType == 'binary':
                         h3 = tf.nn.tanh(h2)
                     else:
@@ -112,9 +116,10 @@ class Medgan(object):
                 W = tf.get_variable('W_'+str(i), shape=[tempDim, genDim])
                 h = tf.matmul(tempVec,W)
                 h2 = batch_norm(h, decay=self.bnDecay, scale=True, is_training=bn_train, updates_collections=None, trainable=False)
-                if genDim != self.generatorDims[-1]:
+                if i != len(self.generatorDims)-1:
                     h3 = self.generatorActivation(h2)
-                elif genDim == self.generatorDims[-1]:
+                ## On last generator dimension.
+                else:
                     if self.dataType == 'binary':
                         h3 = tf.nn.tanh(h2)
                     else:
@@ -129,17 +134,20 @@ class Medgan(object):
         inputMean = tf.reshape(tf.tile(tf.reduce_mean(x_input,0), [batchSize]), (batchSize, self.inputDim))
         tempVec = tf.concat([x_input, inputMean], 1)
         tempDim = self.inputDim * 2
+
         with tf.variable_scope('discriminator', reuse=reuse, regularizer=l2_regularizer(self.l2scale)):
-            for i, discDim in enumerate(self.discriminatorDims[:-1]):
+
+            for i, discDim in enumerate(self.discriminatorDims):
                 W = tf.get_variable('W_'+str(i), shape=[tempDim, discDim])
                 b = tf.get_variable('b_'+str(i), shape=[discDim])
-                h = self.discriminatorActivation(tf.add(tf.matmul(tempVec,W),b))
-                h = tf.nn.dropout(h, keepRate)
-                tempVec = h
-                tempDim = discDim
-            W = tf.get_variable('W', shape=[tempDim, 1])
-            b = tf.get_variable('b', shape=[1])
+                if i != len(self.discriminatorDims)-1:
+                    h = self.discriminatorActivation(tf.add(tf.matmul(tempVec,W),b))
+                    h = tf.nn.dropout(h, keepRate)
+                    tempVec = h
+                    tempDim = discDim
+
             y_hat = tf.squeeze(tf.nn.sigmoid(tf.add(tf.matmul(tempVec, W), b)))
+
         return y_hat
     
     def buildDiscriminator(self, x_real, x_fake, keepRate, decodeVariables, bn_train):
@@ -148,15 +156,14 @@ class Medgan(object):
 
         #Decompress, then discriminate for real samples
         tempVec = x_fake
-        i = 0
-        for _ in self.decompressDims[:-1]:
+
+        for i in range(len(self.decompressDims)-1):
             tempVec = self.aeActivation(tf.add(tf.matmul(tempVec, decodeVariables['aed_W_'+str(i)]), decodeVariables['aed_b_'+str(i)]))
-            i += 1
 
         if self.dataType == 'binary':
-            x_decoded = tf.nn.sigmoid(tf.add(tf.matmul(tempVec, decodeVariables['aed_W_'+str(i)]), decodeVariables['aed_b_'+str(i)]))
+            x_decoded = tf.nn.sigmoid(tf.add(tf.matmul(tempVec, decodeVariables['aed_W_'+str(len(self.decompressDims)-1)]), decodeVariables['aed_b_'+str(len(self.decompressDims)-1)]))
         else:
-            x_decoded = tf.nn.relu(tf.add(tf.matmul(tempVec, decodeVariables['aed_W_'+str(i)]), decodeVariables['aed_b_'+str(i)]))
+            x_decoded = tf.nn.relu(tf.add(tf.matmul(tempVec, decodeVariables['aed_W_'+str(len(self.decompressDims)-1)]), decodeVariables['aed_b_'+str(len(self.decompressDims)-1)]))
 
         y_hat_fake = self.getDiscriminatorResults(x_decoded, keepRate, reuse=True)
 
@@ -171,28 +178,24 @@ class Medgan(object):
         outfd.close()
     
     def generateData(self,
-                     nSamples=100,
-                     modelFile='model',
-                     batchSize=100,
-                     outFile='out'):
+                     nSamples,
+                     modelFile,
+                     batchSize,
+                     outFile):
         x_dummy = tf.placeholder('float', [None, self.inputDim])
         _, decodeVariables = self.buildAutoencoder(x_dummy)
         x_random = tf.placeholder('float', [None, self.randomDim])
         bn_train = tf.placeholder('bool')
         x_emb = self.buildGeneratorTest(x_random, bn_train)
         tempVec = x_emb
-        i = 0
-        for _ in self.decompressDims[:-1]:
+
+        for i in range(len(self.decompressDims)-1):
             tempVec = self.aeActivation(tf.add(tf.matmul(tempVec, decodeVariables['aed_W_'+str(i)]), decodeVariables['aed_b_'+str(i)]))
-            i += 1
 
         if self.dataType == 'binary':
-            x_reconst = tf.nn.sigmoid(tf.add(tf.matmul(tempVec, decodeVariables['aed_W_'+str(i)]), decodeVariables['aed_b_'+str(i)]))
+            x_reconst = tf.nn.sigmoid(tf.add(tf.matmul(tempVec, decodeVariables['aed_W_'+str(len(self.decompressDims)-1)]), decodeVariables['aed_b_'+str(len(self.decompressDims)-1)]))
         else:
-            x_reconst = tf.nn.relu(tf.add(tf.matmul(tempVec, decodeVariables['aed_W_'+str(i)]), decodeVariables['aed_b_'+str(i)]))
-            print('yay')
-
-        # x_reconst = tf.nn.sigmoid(tf.add(tf.matmul(tempVec, decodeVariables['aed_W_'+str(i)]), decodeVariables['aed_b_'+str(i)]))
+            x_reconst = tf.nn.relu(tf.add(tf.matmul(tempVec, decodeVariables['aed_W_'+str(len(self.decompressDims)-1)]), decodeVariables['aed_b_'+str(len(self.decompressDims)-1)]))
 
         np.random.seed(1234)
         saver = tf.train.Saver()
