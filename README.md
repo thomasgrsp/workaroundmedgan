@@ -460,6 +460,7 @@ x_gen_lat = reg_lat.predict(comp_gen)
 
 ```python
 plt.scatter(x_gen_long, x_gen_lat )
+plt.title('Original data coordinates of individuals')
 ```
 
 
@@ -471,6 +472,7 @@ plt.scatter(x_gen_long, x_gen_lat )
 
 ```python
 plt.scatter(x_long, x_lat)
+plt.title('Generated data coordinates of individuals')
 ```
 
 
