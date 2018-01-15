@@ -4,3 +4,5 @@ notebooks/medgan_pca_count.ipynb
 notebooks/map.R
 generated/syntethic_data_nam_2.npy
 data/data_nam_clean_2.matrix
+.DS_Store
+*/.DS_Store
