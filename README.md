@@ -465,12 +465,7 @@ plt.scatter(x_gen_long, x_gen_lat )
 
 
 
-    <matplotlib.collections.PathCollection at 0x11b3b2da0>
-
-
-
-
-![png](medgan_pca_files/medgan_pca_19_1.png)
+![alt text](https://raw.githubusercontent.com/thomasgrsp/workaroundmedgan/master/images/gen.png)
 
 
 
@@ -481,10 +476,5 @@ plt.scatter(x_long, x_lat)
 
 
 
-    <matplotlib.collections.PathCollection at 0x11b4d4860>
-
-
-
-
-![png](medgan_pca_files/medgan_pca_20_1.png)
+![alt text](https://raw.githubusercontent.com/thomasgrsp/workaroundmedgan/master/images/data.png)
 
