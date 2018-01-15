@@ -404,26 +404,6 @@ reg_lat.fit(comp, y_lat)
 
 
 
-
-```python
-from sklearn.svm import SVR
-
-reg_long = SVR()
-reg_lat = SVR()
-
-reg_long.fit(comp, y_long)
-reg_lat.fit(comp, y_lat)
-```
-
-
-
-
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma='auto',
-      kernel='rbf', max_iter=-1, shrinking=True, tol=0.001, verbose=False)
-
-
-
-
 ```python
 x_long = reg_long.predict(comp)
 x_lat = reg_lat.predict(comp)
