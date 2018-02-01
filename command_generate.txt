@@ -1,0 +1,8 @@
+#!/bin/sh
+
+python3 medgan/medgan_generate.py data/data_nam_clean.matrix synthetic_data_nam_10 --model_file './models/model_nam/model_nam-10' --batch_size 20 --data_type binary
+python3 medgan/medgan_generate.py data/data_nam_clean.matrix synthetic_data_nam_40 --model_file './models/model_nam/model_nam-30' --batch_size 20 --data_type binary
+python3 medgan/medgan_generate.py data/data_nam_clean.matrix synthetic_data_nam_80 --model_file './models/model_nam/model_nam-50' --batch_size 20 --data_type binary
+python3 medgan/medgan_generate.py data/data_nam_clean.matrix synthetic_data_nam_150 --model_file './models/model_nam/model_nam-100' --batch_size 20 --data_type binary
+python3 medgan/medgan_generate.py data/data_nam_clean.matrix synthetic_data_nam_300 --model_file './models/model_nam/model_nam-300' --batch_size 20 --data_type binary
+python3 medgan/medgan_generate.py data/data_nam_clean.matrix synthetic_data_nam_490 --model_file './models/model_nam/model_nam-590' --batch_size 20 --data_type binary

@@ -1,0 +1,3 @@
+#!/bin/sh
+
+python3 medgan/medgan_train.py data/data_nam_clean.matrix model_nam --batch_size 50 --data_type binary --pretrain_batch_size 50 --n_epoch 500 --n_pretrain_epoch 750
